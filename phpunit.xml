@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php" colors="true">
+    <testsuites>
+        <testsuite name="Application Test Suite">
+            <directory>tests/PollaTree/</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">src/PollaTree/</directory>
+        </whitelist>
+    </filter>
+    <php>
+        <const name="POLLA_RECOVERY_HASH_COST" value="4"/>
+    </php>
+</phpunit>

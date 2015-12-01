@@ -1,0 +1,30 @@
+{
+    "name": "rentalhost/polla-tree",
+    "description": "The polla-tree will help you organize elements in a tree format.",
+
+    "require": {
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8",
+        "laravel/framework": "^5.1"
+    },
+
+    "autoload": {
+        "psr-4": {
+            "Rentalhost\\PollaTree\\": "src/PollaTree/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rentalhost\\PollaTree\\Test\\": "tests/PollaTree/"
+        }
+    },
+
+    "authors": [
+        {
+            "name": "David Rodrigues",
+            "email": "david.rodrigues@rentalhost.net"
+        }
+    ],
+    "license": "MIT"
+}
