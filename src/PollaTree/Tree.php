@@ -82,12 +82,34 @@ class Tree
                 $branches->put($node->id, $node->branch);
             }
 
+            // Get all branches and mark it as processing.
+            /** @var Branch[] $branchesProcessing */
+            $branchesProcessing = $branches->pluck('object.id')->toArray();
+
+            // Work until process all branches.
             // Define branches parent, root, base and children references.
-            foreach ($branches as $branch) {
-                $branch->setParent($branches->get($branch->object->id_parent));
-                $branch->setChildren($branches->filter(function ($subBranch) use ($branch) {
-                    return $subBranch->object->id_parent === $branch->object->id;
-                }));
+            while ($branchesProcessing) {
+                foreach ($branchesProcessing as $processingKey => $branchKey) {
+                    $branch = $branches->get($branchKey);
+
+                    // If it's not a root element, check if parent exists on branches,
+                    // If it exists, check if it was processed. If not, will skip for now.
+                    if ($branch->object->id_parent !== null &&
+                        $branches->has($branch->object->id_parent) &&
+                        in_array($branch->object->id_parent, $branchesProcessing, true)
+                    ) {
+                        continue;
+                    }
+
+                    // Process branch.
+                    $branch->setParent($branches->get($branch->object->id_parent));
+                    $branch->setChildren($branches->filter(function ($subBranch) use ($branch) {
+                        return $subBranch->object->id_parent === $branch->object->id;
+                    }));
+
+                    // Remove from processing branch.
+                    unset( $branchesProcessing[$processingKey] );
+                }
             }
 
             // Reorder root-based elements by children order.
@@ -97,6 +119,7 @@ class Tree
                 }
             }
 
+            // Reorder unlinked elements by children order.
             foreach ($branches as $branch) {
                 if ($branch->root === null && $branch->base === $branch) {
                     self::reorderCollection($collection, $branch);

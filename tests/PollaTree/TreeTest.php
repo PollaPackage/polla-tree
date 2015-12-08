@@ -44,6 +44,21 @@ class TreeTest extends Base
     }
 
     /**
+     * Returns a default collection type B.
+     * It's a reverse order collection.
+     *
+     * @return Collection
+     */
+    private static function getCollectionB()
+    {
+        return collect([
+            (object) [ 'id' => 3, 'id_parent' => 2, 'title' => 'Level 3' ],
+            (object) [ 'id' => 2, 'id_parent' => 1, 'title' => 'Level 2' ],
+            (object) [ 'id' => 1, 'id_parent' => null, 'title' => 'Level 1' ],
+        ]);
+    }
+
+    /**
      * Test getProcessedCollection method.
      *
      * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
@@ -302,5 +317,43 @@ class TreeTest extends Base
         static::assertInstanceOf(Collection::class, $branches);
         static::assertSame(explode(',', '4,4.I,4.II,5,5.I,A,A.1,A.2,A.2.I,A.2.II,A.2.III,A.2.III.a,A.2.III.b,A.3,A.3.I,B,B.1,C'),
             $branches->pluck('object.title')->toArray());
+    }
+
+    /**
+     * Test if Collection B works correctly.
+     * @coversNothing
+     */
+    public function testCollectionB()
+    {
+        $tree     = new Tree(self::getCollectionB());
+        $branches = $tree->getBothBranches(Tree::TYPE_LINEAR);
+
+        // ID: 3
+        $branch = $branches->get(3);
+        static::assertSame($branches->get(2), $branch->parent);
+        static::assertSame($branches->get(1), $branch->base);
+        static::assertSame($branches->get(1), $branch->root);
+        static::assertSame('Level 3', $branch->object->title);
+        static::assertNull($branch->children);
+
+        // ID: 2
+        $branch = $branches->get(2);
+        static::assertSame($branches->get(1), $branch->parent);
+        static::assertSame($branches->get(1), $branch->base);
+        static::assertSame($branches->get(1), $branch->root);
+        static::assertSame('Level 2', $branch->object->title);
+        static::assertEquals(collect([
+            3 => $branches->get(3),
+        ]), $branch->children);
+
+        // ID: 1
+        $branch = $branches->get(1);
+        static::assertNull($branch->parent);
+        static::assertSame($branch, $branch->base);
+        static::assertSame($branch, $branch->root);
+        static::assertSame('Level 1', $branch->object->title);
+        static::assertEquals(collect([
+            2 => $branches->get(2),
+        ]), $branch->children);
     }
 }
