@@ -59,7 +59,9 @@ class Tree
 
         // Push each branch children.
         if ($branch->children) {
-            foreach ($branch->children as $branchChildren) {
+            /** @var Branch[] $branchesChildren */
+            $branchesChildren = $branch->children;
+            foreach ($branchesChildren as $branchChildren) {
                 self::reorderCollection($container, $branchChildren);
             }
         }
