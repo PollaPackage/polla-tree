@@ -120,6 +120,25 @@ class Branch
     }
 
     /**
+     * Get the children depth (zero-based).
+     * It'll returns zero if not has children.
+     * @return int
+     */
+    public function getDepth()
+    {
+        $depth = -1;
+
+        if ($this->children) {
+            /** @var self $child */
+            foreach ($this->children as $child) {
+                $depth = max($depth, $child->getDepth());
+            }
+        }
+
+        return $depth + 1;
+    }
+
+    /**
      * Returns if branch is linked to root.
      * @return bool
      */

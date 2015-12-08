@@ -98,7 +98,8 @@ class Tree
                         $branches->has($branch->object->id_parent) &&
                         in_array($branch->object->id_parent, $branchesProcessing, true)
                     ) {
-                        continue;
+                        // Workaround: xdebug code coverage can't capture it.
+                        continue; // @codeCoverageIgnore
                     }
 
                     // Process branch.

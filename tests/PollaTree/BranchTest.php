@@ -4,6 +4,7 @@ namespace Rentalhost\PollaTree\Test;
 
 use Illuminate\Support\Collection;
 use Rentalhost\PollaTree\Branch;
+use Rentalhost\PollaTree\Tree;
 
 /**
  * Class BranchTest
@@ -15,7 +16,7 @@ class BranchTest extends Base
      * Get the a linked branch.
      * @return Collection
      */
-    private function getBranchLinkedBranches()
+    private function getLinkedBranches()
     {
         $branchA    = new Branch((object) [ 'id' => 1, 'id_parent' => null, 'title' => 'A' ]);
         $branchA1   = new Branch((object) [ 'id' => 2, 'id_parent' => 1, 'title' => 'A.1' ]);
@@ -91,7 +92,7 @@ class BranchTest extends Base
      * @covers Rentalhost\PollaTree\Branch::getDistance
      * @covers Rentalhost\PollaTree\Branch::getDistanceFromRoot
      */
-    public function testDistance()
+    public function testGetDistance()
     {
         /**
          * @var Branch $branchA
@@ -101,7 +102,7 @@ class BranchTest extends Base
          * @var Branch $branchA2II
          * @var Branch $branchB
          */
-        $branch     = $this->getBranchLinkedBranches();
+        $branch     = $this->getLinkedBranches();
         $branchA    = $branch->get(1);
         $branchA1   = $branchA->children->get(2);
         $branchA2   = $branchA->children->get(3);
@@ -132,6 +133,33 @@ class BranchTest extends Base
         static::assertInstanceOf(Branch::class, $branchB);
         static::assertSame(0, $branchB->getDistance());
         static::assertSame(0, $branchB->getDistanceFromRoot());
+    }
+
+    /**
+     * Test getDepth method.
+     *
+     * @covers Rentalhost\PollaTree\Branch::getDepth
+     */
+    public function testGetDepth()
+    {
+        $tree     = new Tree(collect([
+            (object) [ 'id' => 1, 'id_parent' => null ],
+            (object) [ 'id' => 2, 'id_parent' => 1 ],
+            (object) [ 'id' => 3, 'id_parent' => 2 ],
+            (object) [ 'id' => 4, 'id_parent' => 2 ],
+            (object) [ 'id' => 5, 'id_parent' => 2 ],
+            (object) [ 'id' => 6, 'id_parent' => 4 ],
+            (object) [ 'id' => 7, 'id_parent' => 6 ],
+        ]));
+        $branches = $tree->getLinkedBranch(Tree::TYPE_LINEAR);
+
+        static::assertSame(4, $branches->get(1)->getDepth());
+        static::assertSame(3, $branches->get(2)->getDepth());
+        static::assertSame(0, $branches->get(3)->getDepth());
+        static::assertSame(2, $branches->get(4)->getDepth());
+        static::assertSame(0, $branches->get(5)->getDepth());
+        static::assertSame(1, $branches->get(6)->getDepth());
+        static::assertSame(0, $branches->get(7)->getDepth());
     }
 
     /**
