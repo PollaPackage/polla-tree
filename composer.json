@@ -3,10 +3,10 @@
     "description": "The polla-tree will help you organize elements in a tree format.",
 
     "require": {
-        "laravel/framework": "^5"
+        "laravel/framework": "^5.1"
     },
     "require-dev": {
-        "phpunit/phpunit": "^4"
+        "phpunit/phpunit": "^4.8"
     },
 
     "autoload": {
