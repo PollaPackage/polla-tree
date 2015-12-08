@@ -59,6 +59,18 @@ class TreeTest extends Base
     }
 
     /**
+     * Returns a default colleciton type C.
+     * It's contain a self parent element, it'll be treated as unlinked branch.
+     * @return Collection
+     */
+    private static function getCollectionC()
+    {
+        return collect([
+            (object) [ 'id' => 1, 'id_parent' => 1, 'title' => 'Own Parent?' ],
+        ]);
+    }
+
+    /**
      * Test getProcessedCollection method.
      *
      * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
@@ -355,5 +367,24 @@ class TreeTest extends Base
         static::assertEquals(collect([
             2 => $branches->get(2),
         ]), $branch->children);
+    }
+
+    /**
+     * Test if Collection C treats self-parented element as unlinked element without parent.
+     * @coversNothing
+     */
+    public function testCollectionC()
+    {
+        $tree     = new Tree(self::getCollectionC());
+        $branches = $tree->getUnlinkedBranch();
+
+        // ID: 1
+        $branch = $branches->get(1);
+        static::assertNotNull($branch);
+        static::assertNull($branch->parent);
+        static::assertSame($branch, $branch->base);
+        static::assertNull(null, $branch->root);
+        static::assertSame('Own Parent?', $branch->object->title);
+        static::assertNull($branch->children);
     }
 }

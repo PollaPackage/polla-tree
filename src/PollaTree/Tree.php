@@ -94,6 +94,11 @@ class Tree
                 foreach ($branchesProcessing as $processingKey => $branchKey) {
                     $branch = $branches->get($branchKey);
 
+                    // If element points to self-parent, then will set parent to null.
+                    if ($branch->object->id_parent === $branch->object->id) {
+                        $branch->object->id_parent = null;
+                    }
+
                     // If it's not a root element, check if parent exists on branches,
                     // If it exists, check if it was processed. If not, will skip for now.
                     if ($branch->object->id_parent !== null &&
