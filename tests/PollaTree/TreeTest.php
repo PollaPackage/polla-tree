@@ -333,7 +333,8 @@ class TreeTest extends Base
 
     /**
      * Test if Collection B works correctly.
-     * @coversNothing
+     *
+     * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
      */
     public function testCollectionB()
     {
@@ -371,7 +372,8 @@ class TreeTest extends Base
 
     /**
      * Test if Collection C treats self-parented element as unlinked element without parent.
-     * @coversNothing
+     *
+     * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
      */
     public function testCollectionC()
     {
