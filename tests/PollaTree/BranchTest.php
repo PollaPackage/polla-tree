@@ -136,6 +136,80 @@ class BranchTest extends Base
     }
 
     /**
+     * Test getDescendants and collectDescendants (private) methods.
+     *
+     * @covers Rentalhost\PollaTree\Branch::getDescendants
+     * @covers Rentalhost\PollaTree\Branch::collectDescendants
+     */
+    public function testGetDescendants()
+    {
+        $tree     = new Tree(collect([
+            (object) [ 'id' => 1, 'id_parent' => null ],
+            (object) [ 'id' => 2, 'id_parent' => 1 ],
+            (object) [ 'id' => 3, 'id_parent' => 2 ],
+            (object) [ 'id' => 4, 'id_parent' => 2 ],
+            (object) [ 'id' => 5, 'id_parent' => 2 ],
+            (object) [ 'id' => 6, 'id_parent' => 4 ],
+            (object) [ 'id' => 7, 'id_parent' => 6 ],
+        ]));
+        $branches = $tree->getLinkedBranch(Tree::TYPE_LINEAR);
+
+        // Default properties (unlimited depth, don't include own branch).
+        static::assertSame([ 2, 3, 4, 6, 7, 5 ], $branches->get(1)->getDescendants()->pluck('object.id')->toArray());
+        static::assertSame([ 3, 4, 6, 7, 5 ], $branches->get(2)->getDescendants()->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(3)->getDescendants()->pluck('object.id')->toArray());
+        static::assertSame([ 6, 7 ], $branches->get(4)->getDescendants()->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(5)->getDescendants()->pluck('object.id')->toArray());
+        static::assertSame([ 7 ], $branches->get(6)->getDescendants()->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(7)->getDescendants()->pluck('object.id')->toArray());
+
+        // Specific properties (unlimited depth, include own branch).
+        static::assertSame([ 1, 2, 3, 4, 6, 7, 5 ], $branches->get(1)->getDescendants(null, true)->pluck('object.id')->toArray());
+        static::assertSame([ 2, 3, 4, 6, 7, 5 ], $branches->get(2)->getDescendants(null, true)->pluck('object.id')->toArray());
+        static::assertSame([ 3 ], $branches->get(3)->getDescendants(null, true)->pluck('object.id')->toArray());
+        static::assertSame([ 4, 6, 7 ], $branches->get(4)->getDescendants(null, true)->pluck('object.id')->toArray());
+        static::assertSame([ 5 ], $branches->get(5)->getDescendants(null, true)->pluck('object.id')->toArray());
+        static::assertSame([ 6, 7 ], $branches->get(6)->getDescendants(null, true)->pluck('object.id')->toArray());
+        static::assertSame([ 7 ], $branches->get(7)->getDescendants(null, true)->pluck('object.id')->toArray());
+
+        // Specific properties (limit to zero depth, basically will not returns nothing).
+        static::assertSame([ ], $branches->get(1)->getDescendants(0)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(2)->getDescendants(0)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(3)->getDescendants(0)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(4)->getDescendants(0)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(5)->getDescendants(0)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(6)->getDescendants(0)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(7)->getDescendants(0)->pluck('object.id')->toArray());
+
+        // Specific properties (limit to zero depth, including own branch, basically will returns only own branch).
+        static::assertSame([ 1 ], $branches->get(1)->getDescendants(0, true)->pluck('object.id')->toArray());
+        static::assertSame([ 2 ], $branches->get(2)->getDescendants(0, true)->pluck('object.id')->toArray());
+        static::assertSame([ 3 ], $branches->get(3)->getDescendants(0, true)->pluck('object.id')->toArray());
+        static::assertSame([ 4 ], $branches->get(4)->getDescendants(0, true)->pluck('object.id')->toArray());
+        static::assertSame([ 5 ], $branches->get(5)->getDescendants(0, true)->pluck('object.id')->toArray());
+        static::assertSame([ 6 ], $branches->get(6)->getDescendants(0, true)->pluck('object.id')->toArray());
+        static::assertSame([ 7 ], $branches->get(7)->getDescendants(0, true)->pluck('object.id')->toArray());
+
+        // Specific properties (limit to one depth descendant, children, basically).
+        static::assertSame([ 2 ], $branches->get(1)->getDescendants(1)->pluck('object.id')->toArray());
+        static::assertSame([ 3, 4, 5 ], $branches->get(2)->getDescendants(1)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(3)->getDescendants(1)->pluck('object.id')->toArray());
+        static::assertSame([ 6 ], $branches->get(4)->getDescendants(1)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(5)->getDescendants(1)->pluck('object.id')->toArray());
+        static::assertSame([ 7 ], $branches->get(6)->getDescendants(1)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(7)->getDescendants(1)->pluck('object.id')->toArray());
+
+        // Specific properties (limit to two depth descendants, grandchildren, basically).
+        static::assertSame([ 2, 3, 4, 5 ], $branches->get(1)->getDescendants(2)->pluck('object.id')->toArray());
+        static::assertSame([ 3, 4, 6, 5 ], $branches->get(2)->getDescendants(2)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(3)->getDescendants(2)->pluck('object.id')->toArray());
+        static::assertSame([ 6, 7 ], $branches->get(4)->getDescendants(2)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(5)->getDescendants(2)->pluck('object.id')->toArray());
+        static::assertSame([ 7 ], $branches->get(6)->getDescendants(2)->pluck('object.id')->toArray());
+        static::assertSame([ ], $branches->get(7)->getDescendants(2)->pluck('object.id')->toArray());
+    }
+
+    /**
      * Test getDepth method.
      *
      * @covers Rentalhost\PollaTree\Branch::getDepth

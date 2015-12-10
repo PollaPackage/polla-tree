@@ -90,6 +90,53 @@ class Branch
     }
 
     /**
+     * Collect base descendants respecting max depth, storing in the linear container.
+     *
+     * @param Collection $container     Linear container.
+     * @param self       $base          Base branch.
+     * @param int|null   $maxDepth      Max depth to respect.
+     * @param boolean    $includeItself If should include the own base as a descendant.
+     */
+    private static function collectDescendants($container, $base, $maxDepth, $includeItself)
+    {
+        // If max depth is negative, then we need cancel the collect process.
+        if ($maxDepth < 0) {
+            return;
+        }
+
+        // Include the own base as descendant.
+        if ($includeItself === true) {
+            $container->push($base);
+        }
+
+        // Collect descendants.
+        if ($base->children) {
+            /** @var self[] $baseChildren */
+            $baseChildren = $base->children;
+            foreach ($baseChildren as $child) {
+                self::collectDescendants($container, $child, $maxDepth === null ? null : $maxDepth - 1, true);
+            }
+        }
+    }
+
+    /**
+     * Get all branch descentants, in any depth, as linear.
+     *
+     * @param int|null $maxDepth      Depth limit (default is unlimited, null).
+     * @param bool     $includeItself Include own branch as descendant.
+     *
+     * @return Collection
+     */
+    public function getDescendants($maxDepth = null, $includeItself = false)
+    {
+        $descentantsContainer = collect();
+
+        self::collectDescendants($descentantsContainer, $this, $maxDepth, $includeItself);
+
+        return $descentantsContainer;
+    }
+
+    /**
      * Get the distance of this branch to base branch.
      * Zero mean the own node, positive numbers mean how much nodes there are until base.
      * @return int
