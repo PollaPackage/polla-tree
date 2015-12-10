@@ -129,8 +129,9 @@ class Branch
         $depth = -1;
 
         if ($this->children) {
-            /** @var self $child */
-            foreach ($this->children as $child) {
+            /** @var self[] $children */
+            $children = $this->children;
+            foreach ($children as $child) {
                 $depth = max($depth, $child->getDepth());
             }
         }
