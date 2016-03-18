@@ -11,19 +11,17 @@ use Illuminate\Support\Collection;
 class Tree
 {
     /**
-     * Type of resulting collection constants.
-     * @var string
-     */
-    const TYPE_TREE = 'tree';
-    const TYPE_LINEAR = 'linear';
-
-    /**
      * Priority of link type when get both branches together.
      * @var string
      */
     const FIRST_LINKED = 'linked';
     const FIRST_UNLINKED = 'unlinked';
-
+    const TYPE_LINEAR = 'linear';
+    /**
+     * Type of resulting collection constants.
+     * @var string
+     */
+    const TYPE_TREE = 'tree';
     /**
      * Collection to work.
      * @var Collection
@@ -65,6 +63,88 @@ class Tree
                 self::reorderCollection($container, $branchChildren);
             }
         }
+    }
+
+    /**
+     * Returns root-linked and unlinked branches together.
+     * By default it'll returns first linked then unlinked branches.
+     *
+     * @param string $type         Type of returned collection.
+     * @param string $linkPriority Priority of link type.
+     *
+     * @return Collection
+     */
+    public function getBothBranches($type = self::TYPE_TREE, $linkPriority = self::FIRST_LINKED)
+    {
+        $firstCollectionMethod = 'getLinkedBranch';
+        $lastCollectionMethod  = 'getUnlinkedBranch';
+
+        if ($linkPriority === self::FIRST_UNLINKED) {
+            $tempCollectionMethodSwift = $firstCollectionMethod;
+            $firstCollectionMethod     = $lastCollectionMethod;
+            $lastCollectionMethod      = $tempCollectionMethodSwift;
+        }
+
+        $collection = call_user_func([ $this, $firstCollectionMethod ], $type);
+
+        foreach (call_user_func([ $this, $lastCollectionMethod ], $type) as $branch) {
+            $collection->put($branch->object->id, $branch);
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Returns only root-linked branches.
+     *
+     * @param string|null $type Type of returned collection.
+     *
+     * @return Collection
+     */
+    public function getLinkedBranch($type = self::TYPE_TREE)
+    {
+        // Return a root-linked tree collection.
+        // It'll return only branches from root, basically.
+        if ($type === null || $type === self::TYPE_TREE) {
+            $self = $this;
+
+            return $this->getProcessedCollection()->filter(function ($branch) use ($self) {
+                return $branch->root === $branch;
+            });
+        }
+
+        // Return a root-linked linear collection.
+        // Basically will return branches with root defined.
+        return $this->getProcessedCollection()->filter(function ($branch) {
+            return $branch->root !== null;
+        });
+    }
+
+    /**
+     * Returns a collection that is not linked to any root branch.
+     *
+     * @param string $type Type of returned collection.
+     *
+     * @return Collection
+     */
+    public function getUnlinkedBranch($type = self::TYPE_TREE)
+    {
+        // Return a unlinked tree collection.
+        // It'll return only branches without root branch defined, but that still are base branches, basically.
+        if ($type === null || $type === self::TYPE_TREE) {
+            $self = $this;
+
+            return $this->getProcessedCollection()->filter(function ($branch) use ($self) {
+                return $branch->root === null &&
+                       $branch->base === $branch;
+            });
+        }
+
+        // Return a unlinked linear collection.
+        // Basically will return branches without root.
+        return $this->getProcessedCollection()->filter(function ($branch) {
+            return $branch->root === null;
+        });
     }
 
     /**
@@ -138,87 +218,5 @@ class Tree
         }
 
         return $this->collection;
-    }
-
-    /**
-     * Returns only root-linked branches.
-     *
-     * @param string|null $type Type of returned collection.
-     *
-     * @return Collection
-     */
-    public function getLinkedBranch($type = self::TYPE_TREE)
-    {
-        // Return a root-linked tree collection.
-        // It'll return only branches from root, basically.
-        if ($type === null || $type === self::TYPE_TREE) {
-            $self = $this;
-
-            return $this->getProcessedCollection()->filter(function ($branch) use ($self) {
-                return $branch->root === $branch;
-            });
-        }
-
-        // Return a root-linked linear collection.
-        // Basically will return branches with root defined.
-        return $this->getProcessedCollection()->filter(function ($branch) {
-            return $branch->root !== null;
-        });
-    }
-
-    /**
-     * Returns a collection that is not linked to any root branch.
-     *
-     * @param string $type Type of returned collection.
-     *
-     * @return Collection
-     */
-    public function getUnlinkedBranch($type = self::TYPE_TREE)
-    {
-        // Return a unlinked tree collection.
-        // It'll return only branches without root branch defined, but that still are base branches, basically.
-        if ($type === null || $type === self::TYPE_TREE) {
-            $self = $this;
-
-            return $this->getProcessedCollection()->filter(function ($branch) use ($self) {
-                return $branch->root === null &&
-                       $branch->base === $branch;
-            });
-        }
-
-        // Return a unlinked linear collection.
-        // Basically will return branches without root.
-        return $this->getProcessedCollection()->filter(function ($branch) {
-            return $branch->root === null;
-        });
-    }
-
-    /**
-     * Returns root-linked and unlinked branches together.
-     * By default it'll returns first linked then unlinked branches.
-     *
-     * @param string $type         Type of returned collection.
-     * @param string $linkPriority Priority of link type.
-     *
-     * @return Collection
-     */
-    public function getBothBranches($type = self::TYPE_TREE, $linkPriority = self::FIRST_LINKED)
-    {
-        $firstCollectionMethod = 'getLinkedBranch';
-        $lastCollectionMethod  = 'getUnlinkedBranch';
-
-        if ($linkPriority === self::FIRST_UNLINKED) {
-            $tempCollectionMethodSwift = $firstCollectionMethod;
-            $firstCollectionMethod     = $lastCollectionMethod;
-            $lastCollectionMethod      = $tempCollectionMethodSwift;
-        }
-
-        $collection = call_user_func([ $this, $firstCollectionMethod ], $type);
-
-        foreach (call_user_func([ $this, $lastCollectionMethod ], $type) as $branch) {
-            $collection->put($branch->object->id, $branch);
-        }
-
-        return $collection;
     }
 }

@@ -71,6 +71,122 @@ class TreeTest extends Base
     }
 
     /**
+     * Test if Collection B works correctly.
+     *
+     * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
+     */
+    public function testCollectionB()
+    {
+        $tree     = new Tree(self::getCollectionB());
+        $branches = $tree->getBothBranches(Tree::TYPE_LINEAR);
+
+        // ID: 3
+        $branch = $branches->get(3);
+        static::assertSame($branches->get(2), $branch->parent);
+        static::assertSame($branches->get(1), $branch->base);
+        static::assertSame($branches->get(1), $branch->root);
+        static::assertSame('Level 3', $branch->object->title);
+        static::assertNull($branch->children);
+
+        // ID: 2
+        $branch = $branches->get(2);
+        static::assertSame($branches->get(1), $branch->parent);
+        static::assertSame($branches->get(1), $branch->base);
+        static::assertSame($branches->get(1), $branch->root);
+        static::assertSame('Level 2', $branch->object->title);
+        static::assertEquals(collect([
+            3 => $branches->get(3),
+        ]), $branch->children);
+
+        // ID: 1
+        $branch = $branches->get(1);
+        static::assertNull($branch->parent);
+        static::assertSame($branch, $branch->base);
+        static::assertSame($branch, $branch->root);
+        static::assertSame('Level 1', $branch->object->title);
+        static::assertEquals(collect([
+            2 => $branches->get(2),
+        ]), $branch->children);
+    }
+
+    /**
+     * Test if Collection C treats self-parented element as unlinked element without parent.
+     *
+     * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
+     */
+    public function testCollectionC()
+    {
+        $tree     = new Tree(self::getCollectionC());
+        $branches = $tree->getUnlinkedBranch();
+
+        // ID: 1
+        $branch = $branches->get(1);
+        static::assertNotNull($branch);
+        static::assertNull($branch->parent);
+        static::assertSame($branch, $branch->base);
+        static::assertNull(null, $branch->root);
+        static::assertSame('Own Parent?', $branch->object->title);
+        static::assertNull($branch->children);
+    }
+
+    /**
+     * Test getBothBranches method.
+     *
+     * @covers Rentalhost\PollaTree\Tree::getBothBranches
+     */
+    public function testGetBothBranches()
+    {
+        $tree     = new Tree(self::getCollectionA());
+        $branches = $tree->getBothBranches(/** Tree::TYPE_TREE, Tree::LINKED_FIRST */);
+
+        // Tree type.
+        static::assertInstanceOf(Collection::class, $branches);
+        static::assertSame([ 'A', 'B', 'C', '4', '5' ], $branches->pluck('object.title')->toArray());
+
+        // Linear type.
+        $branches = $tree->getBothBranches(Tree::TYPE_LINEAR/**, Tree::LINKED_FIRST */);
+        static::assertInstanceOf(Collection::class, $branches);
+        static::assertSame(explode(',', 'A,A.1,A.2,A.2.I,A.2.II,A.2.III,A.2.III.a,A.2.III.b,A.3,A.3.I,B,B.1,C,4,4.I,4.II,5,5.I'),
+            $branches->pluck('object.title')->toArray());
+
+        // First unlinked.
+        $branches = $tree->getBothBranches(null, Tree::FIRST_UNLINKED);
+
+        // Tree type.
+        static::assertInstanceOf(Collection::class, $branches);
+        static::assertSame([ '4', '5', 'A', 'B', 'C' ], $branches->pluck('object.title')->toArray());
+
+        // Linear type.
+        $branches = $tree->getBothBranches(Tree::TYPE_LINEAR, Tree::FIRST_UNLINKED);
+        static::assertInstanceOf(Collection::class, $branches);
+        static::assertSame(explode(',', '4,4.I,4.II,5,5.I,A,A.1,A.2,A.2.I,A.2.II,A.2.III,A.2.III.a,A.2.III.b,A.3,A.3.I,B,B.1,C'),
+            $branches->pluck('object.title')->toArray());
+    }
+
+    /**
+     * Test getLinkedBranch method.
+     *
+     * @covers Rentalhost\PollaTree\Tree::__construct
+     * @covers Rentalhost\PollaTree\Tree::getLinkedBranch
+     * @covers Rentalhost\PollaTree\Tree::reorderCollection
+     */
+    public function testGetLinkedBranch()
+    {
+        $tree     = new Tree(self::getCollectionA());
+        $branches = $tree->getLinkedBranch(/** Tree::TYPE_TREE */);
+
+        // Tree type.
+        static::assertInstanceOf(Collection::class, $branches);
+        static::assertSame([ 'A', 'B', 'C' ], $branches->pluck('object.title')->toArray());
+
+        // Linear type.
+        $branches = $tree->getLinkedBranch(Tree::TYPE_LINEAR);
+        static::assertInstanceOf(Collection::class, $branches);
+        static::assertSame(explode(',', 'A,A.1,A.2,A.2.I,A.2.II,A.2.III,A.2.III.a,A.2.III.b,A.3,A.3.I,B,B.1,C'),
+            $branches->pluck('object.title')->toArray());
+    }
+
+    /**
      * Test getProcessedCollection method.
      *
      * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
@@ -255,29 +371,6 @@ class TreeTest extends Base
     }
 
     /**
-     * Test getLinkedBranch method.
-     *
-     * @covers Rentalhost\PollaTree\Tree::__construct
-     * @covers Rentalhost\PollaTree\Tree::getLinkedBranch
-     * @covers Rentalhost\PollaTree\Tree::reorderCollection
-     */
-    public function testGetLinkedBranch()
-    {
-        $tree     = new Tree(self::getCollectionA());
-        $branches = $tree->getLinkedBranch(/** Tree::TYPE_TREE */);
-
-        // Tree type.
-        static::assertInstanceOf(Collection::class, $branches);
-        static::assertSame([ 'A', 'B', 'C' ], $branches->pluck('object.title')->toArray());
-
-        // Linear type.
-        $branches = $tree->getLinkedBranch(Tree::TYPE_LINEAR);
-        static::assertInstanceOf(Collection::class, $branches);
-        static::assertSame(explode(',', 'A,A.1,A.2,A.2.I,A.2.II,A.2.III,A.2.III.a,A.2.III.b,A.3,A.3.I,B,B.1,C'),
-            $branches->pluck('object.title')->toArray());
-    }
-
-    /**
      * Test getUnlinkedBranch method.
      *
      * @covers Rentalhost\PollaTree\Tree::getUnlinkedBranch
@@ -295,98 +388,5 @@ class TreeTest extends Base
         $branches = $tree->getUnlinkedBranch(Tree::TYPE_LINEAR);
         static::assertInstanceOf(Collection::class, $branches);
         static::assertSame([ '4', '4.I', '4.II', '5', '5.I' ], $branches->pluck('object.title')->toArray());
-    }
-
-    /**
-     * Test getBothBranches method.
-     *
-     * @covers Rentalhost\PollaTree\Tree::getBothBranches
-     */
-    public function testGetBothBranches()
-    {
-        $tree     = new Tree(self::getCollectionA());
-        $branches = $tree->getBothBranches(/** Tree::TYPE_TREE, Tree::LINKED_FIRST */);
-
-        // Tree type.
-        static::assertInstanceOf(Collection::class, $branches);
-        static::assertSame([ 'A', 'B', 'C', '4', '5' ], $branches->pluck('object.title')->toArray());
-
-        // Linear type.
-        $branches = $tree->getBothBranches(Tree::TYPE_LINEAR/**, Tree::LINKED_FIRST */);
-        static::assertInstanceOf(Collection::class, $branches);
-        static::assertSame(explode(',', 'A,A.1,A.2,A.2.I,A.2.II,A.2.III,A.2.III.a,A.2.III.b,A.3,A.3.I,B,B.1,C,4,4.I,4.II,5,5.I'),
-            $branches->pluck('object.title')->toArray());
-
-        // First unlinked.
-        $branches = $tree->getBothBranches(null, Tree::FIRST_UNLINKED);
-
-        // Tree type.
-        static::assertInstanceOf(Collection::class, $branches);
-        static::assertSame([ '4', '5', 'A', 'B', 'C' ], $branches->pluck('object.title')->toArray());
-
-        // Linear type.
-        $branches = $tree->getBothBranches(Tree::TYPE_LINEAR, Tree::FIRST_UNLINKED);
-        static::assertInstanceOf(Collection::class, $branches);
-        static::assertSame(explode(',', '4,4.I,4.II,5,5.I,A,A.1,A.2,A.2.I,A.2.II,A.2.III,A.2.III.a,A.2.III.b,A.3,A.3.I,B,B.1,C'),
-            $branches->pluck('object.title')->toArray());
-    }
-
-    /**
-     * Test if Collection B works correctly.
-     *
-     * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
-     */
-    public function testCollectionB()
-    {
-        $tree     = new Tree(self::getCollectionB());
-        $branches = $tree->getBothBranches(Tree::TYPE_LINEAR);
-
-        // ID: 3
-        $branch = $branches->get(3);
-        static::assertSame($branches->get(2), $branch->parent);
-        static::assertSame($branches->get(1), $branch->base);
-        static::assertSame($branches->get(1), $branch->root);
-        static::assertSame('Level 3', $branch->object->title);
-        static::assertNull($branch->children);
-
-        // ID: 2
-        $branch = $branches->get(2);
-        static::assertSame($branches->get(1), $branch->parent);
-        static::assertSame($branches->get(1), $branch->base);
-        static::assertSame($branches->get(1), $branch->root);
-        static::assertSame('Level 2', $branch->object->title);
-        static::assertEquals(collect([
-            3 => $branches->get(3),
-        ]), $branch->children);
-
-        // ID: 1
-        $branch = $branches->get(1);
-        static::assertNull($branch->parent);
-        static::assertSame($branch, $branch->base);
-        static::assertSame($branch, $branch->root);
-        static::assertSame('Level 1', $branch->object->title);
-        static::assertEquals(collect([
-            2 => $branches->get(2),
-        ]), $branch->children);
-    }
-
-    /**
-     * Test if Collection C treats self-parented element as unlinked element without parent.
-     *
-     * @covers Rentalhost\PollaTree\Tree::getProcessedCollection
-     */
-    public function testCollectionC()
-    {
-        $tree     = new Tree(self::getCollectionC());
-        $branches = $tree->getUnlinkedBranch();
-
-        // ID: 1
-        $branch = $branches->get(1);
-        static::assertNotNull($branch);
-        static::assertNull($branch->parent);
-        static::assertSame($branch, $branch->base);
-        static::assertNull(null, $branch->root);
-        static::assertSame('Own Parent?', $branch->object->title);
-        static::assertNull($branch->children);
     }
 }
