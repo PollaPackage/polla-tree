@@ -27,7 +27,7 @@ class BranchTest extends Base
         // Else, it'll be null for now. setParent should fill this property.
         $branchB = new Branch((object) [ 'id_parent' => 1 ]);
 
-        static::assertSame(null, $branchB->root);
+        static::assertNull($branchB->root);
     }
 
     /**

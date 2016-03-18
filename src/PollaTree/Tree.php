@@ -17,11 +17,13 @@ class Tree
     const FIRST_LINKED = 'linked';
     const FIRST_UNLINKED = 'unlinked';
     const TYPE_LINEAR = 'linear';
+
     /**
      * Type of resulting collection constants.
      * @var string
      */
     const TYPE_TREE = 'tree';
+
     /**
      * Collection to work.
      * @var Collection
@@ -85,9 +87,12 @@ class Tree
             $lastCollectionMethod      = $tempCollectionMethodSwift;
         }
 
+        /** @var Collection $collection */
+        /** @var Collection $branches */
         $collection = call_user_func([ $this, $firstCollectionMethod ], $type);
+        $branches   = call_user_func([ $this, $lastCollectionMethod ], $type);
 
-        foreach (call_user_func([ $this, $lastCollectionMethod ], $type) as $branch) {
+        foreach ($branches as $branch) {
             $collection->put($branch->object->id, $branch);
         }
 
@@ -155,8 +160,8 @@ class Tree
     {
         /** @var Branch $branch */
         if (!$this->processed) {
-            $branches   = collect();
-            $collection = collect();
+            $branches   = new Collection();
+            $collection = new Collection();
 
             // Prepare branches collection reference.
             foreach ($this->collection as $node) {
